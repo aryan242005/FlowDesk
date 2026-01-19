@@ -1,5 +1,9 @@
 package com.example.flow_desk_backend.controller;
 
+import com.example.flow_desk_backend.dto.TicketResponse;
+import com.example.flow_desk_backend.repository.CustomerRepository;
+import com.example.flow_desk_backend.util.EmailSender;
+import com.example.flow_desk_backend.util.RedisService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,6 +30,10 @@ import com.example.flow_desk_backend.entity.Role;
 import com.example.flow_desk_backend.entity.UserEntity;
 import com.example.flow_desk_backend.util.JwtUtil;
 
+import java.time.Duration;
+import java.util.List;
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -33,9 +41,12 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
+    private final CustomerRepository customerRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final EmailSender emailSender;
+    private final RedisService redisService;
 
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signUp(@RequestBody UserEntity user) {
@@ -80,5 +91,15 @@ public class AuthController {
         );
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/customer-request")
+    public ResponseEntity<String> requestCustomerToken(@RequestBody String email){
+        String customerToken = UUID.randomUUID().toString();
+        redisService.set(customerToken, email, Duration.ofMinutes(30));
+
+        emailSender.sendEmail(email, "Request for Access Token", customerToken);
+
+        return ResponseEntity.ok("Access token sent to " + email);
     }
 }

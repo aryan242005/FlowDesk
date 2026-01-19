@@ -7,5 +7,5 @@ import com.example.flow_desk_backend.entity.TicketEntity;
 import java.util.List;
 
 public interface TicketRepository extends JpaRepository<TicketEntity, Long> {
-    List<TicketEntity> getTicketByCustomer(Long customerId);
+    List<TicketEntity> findByCustomerCustomerId(Long customerId);
 }

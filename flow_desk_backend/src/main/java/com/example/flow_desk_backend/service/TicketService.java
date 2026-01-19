@@ -2,6 +2,11 @@ package com.example.flow_desk_backend.service;
 
 import java.util.List;
 
+import com.example.flow_desk_backend.entity.CustomerEntity;
+import com.example.flow_desk_backend.exception.*;
+import com.example.flow_desk_backend.repository.CompanyRepository;
+import com.example.flow_desk_backend.repository.CustomerRepository;
+import com.example.flow_desk_backend.util.RedisService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -11,8 +16,6 @@ import com.example.flow_desk_backend.dto.TicketResponse;
 import com.example.flow_desk_backend.entity.TicketEntity;
 import com.example.flow_desk_backend.entity.UserEntity;
 import com.example.flow_desk_backend.entity.Status;
-import com.example.flow_desk_backend.exception.TicketNotFoundException;
-import com.example.flow_desk_backend.exception.UserNotFoundException;
 import com.example.flow_desk_backend.repository.TicketRepository;
 import com.example.flow_desk_backend.repository.UserRepository;
 import com.example.flow_desk_backend.security.CustomUserDetails;
@@ -25,16 +28,29 @@ public class TicketService {
 
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
+    private final CustomerRepository customerRepository;
+    private final CompanyRepository companyRepository;
+    private final RedisService redisService;
 
-    public TicketEntity addTicket(TicketEntity newTicket) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails principal = (CustomUserDetails) auth.getPrincipal();
-        UserEntity loggedInUser = principal.getUser();
+    public TicketEntity addTicket(TicketEntity newTicket, Long companyId, String customerToken) {
+        String customerEmail = redisService.get(customerToken);
+        if (customerEmail == null) throw new InvalidTokenException();
 
-        newTicket.setCompany(loggedInUser.getCompany());
+        CustomerEntity customer = customerRepository.findByEmail(customerEmail);
+        CustomerEntity savedCustomer;
+        if(customer == null){
+            CustomerEntity newCustomer = new CustomerEntity();
+            newCustomer.setEmail(customerEmail);
+            savedCustomer = customerRepository.save(newCustomer);
+        }else{
+            savedCustomer = customer;
+        }
+        if(savedCustomer.getCustomerName() == null || savedCustomer.getPhoneNumber() == null) throw new InformationMissingException("PLease enter name and phone");
 
-        TicketEntity savedTicket = ticketRepository.save(newTicket);
-        return savedTicket;
+        newTicket.setCompany(companyRepository.findById(companyId).orElseThrow(() -> new CompanyNotFoundException("Company not found")));;
+        newTicket.setCustomer(savedCustomer);
+
+        return ticketRepository.save(newTicket);
     }
 
     public TicketResponse assignEmployee(Long employee_id, Long ticket_id) {
@@ -56,7 +72,7 @@ public class TicketService {
                 employee.getCreatedAt()
         );
 
-        TicketResponse ticketResponse = new TicketResponse(
+        return new TicketResponse(
             ticket.getTicketId(),
             ticket.getTitle(),
             ticket.getTicketDescription(),
@@ -65,8 +81,6 @@ public class TicketService {
             ticket.getCreatedAt(),
             employeeResponse
         );
-
-        return ticketResponse;
     }
 
     public TicketResponse updateTicketStatus(Long ticket_id, Status status){
@@ -88,7 +102,7 @@ public class TicketService {
                 employee.getCreatedAt()
         );
 
-        TicketResponse ticketResponse = new TicketResponse(
+        return new TicketResponse(
             updatedTicket.getTicketId(),
             updatedTicket.getTitle(),
             updatedTicket.getTicketDescription(),
@@ -97,8 +111,6 @@ public class TicketService {
             updatedTicket.getCreatedAt(),
             employeeResponse
         );
-
-        return ticketResponse;
     }
 
     public TicketResponse getTicketById(Long ticket_id) {
@@ -132,8 +144,28 @@ public class TicketService {
        );
     }
 
-    public List<TicketEntity> getAllTickets() {
+    public List<TicketResponse> getAllTickets() {
         List<TicketEntity> tickets = ticketRepository.findAll();
-        return tickets;
+        return tickets.stream().map(this::mapToDto).toList();
+    }
+
+    public List<TicketResponse> getTicketsByCustomer(String customerToken){
+        String customerEmail = redisService.get(customerToken);
+        if (customerEmail == null) throw new InvalidTokenException();
+        CustomerEntity customer = customerRepository.findByEmail(customerEmail);
+        List<TicketEntity> tickets = ticketRepository.findByCustomerCustomerId(customer.getCustomerId());
+        return tickets.stream().map(this::mapToDto).toList();
+    }
+
+    public TicketResponse mapToDto(TicketEntity ticket){
+        return new TicketResponse(
+                ticket.getTicketId(),
+                ticket.getTitle(),
+                ticket.getTicketDescription(),
+                ticket.getPriority().name(),
+                ticket.getStatus().name(),
+                ticket.getCreatedAt(),
+                getEmployeeResponse(ticket)
+        );
     }
 }
