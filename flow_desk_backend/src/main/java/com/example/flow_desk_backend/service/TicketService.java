@@ -85,32 +85,25 @@ public class TicketService {
 
     public TicketResponse updateTicketStatus(Long ticket_id, Status status){
         TicketEntity ticket = ticketRepository.findById(ticket_id).orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
+
+        if(ticket.getEmployee() == null){
+            throw new EmployeeNotAssignedException("Empolyee must be assigned to update status");
+        }
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails principal = (CustomUserDetails) auth.getPrincipal();
+        UserEntity loggedInUser = principal.getUser();
+
+        if(!ticket.getEmployee().getId().equals(loggedInUser.getId())){
+            throw new AuthorizationException("Employee must be assigned to update status");
+        }
+
         UserEntity employee = ticket.getEmployee();
         ticket.setStatus(status);
 
         TicketEntity updatedTicket = ticketRepository.save(ticket);
 
-        EmployeeResponse employeeResponse = new EmployeeResponse(
-                employee.getId(),
-                employee.getEmployeeName(),
-                employee.getEmployeeEmail(),
-                employee.getDepartment(),
-                employee.getDesignation(),
-                employee.getPhoneNumber(),
-                employee.getRole(),
-                employee.getIsActive(),
-                employee.getCreatedAt()
-        );
-
-        return new TicketResponse(
-            updatedTicket.getTicketId(),
-            updatedTicket.getTitle(),
-            updatedTicket.getTicketDescription(),
-            updatedTicket.getPriority().name(),
-            updatedTicket.getStatus().name(),
-            updatedTicket.getCreatedAt(),
-            employeeResponse
-        );
+        return mapToDto(updatedTicket);
     }
 
     public TicketResponse getTicketById(Long ticket_id) {

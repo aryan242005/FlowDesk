@@ -37,7 +37,12 @@ public class TicketMessageEntity {
     @Size(max=2000, message="Message too long")
     @NotBlank(message="Ticket message cannot be empty")
     private String messageText;
-    
+
+    private String attachmentName;
+    private String attachmentType;
+    private Long attachmentSize;
+    private String attachmentPath;
+
     private LocalDateTime createdAt;    
 
     private Boolean read = false;

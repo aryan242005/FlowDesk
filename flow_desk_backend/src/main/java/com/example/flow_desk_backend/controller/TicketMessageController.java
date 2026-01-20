@@ -1,14 +1,16 @@
 package com.example.flow_desk_backend.controller;
 
-import com.example.flow_desk_backend.dto.AddTicketRequest;
 import com.example.flow_desk_backend.dto.MarkAsReadRequest;
 import com.example.flow_desk_backend.dto.TicketMessageResponse;
-import com.example.flow_desk_backend.entity.TicketEntity;
+import com.example.flow_desk_backend.service.FileService;
 import com.example.flow_desk_backend.service.TicketMessageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.net.MalformedURLException;
 import java.util.List;
 
 @RestController
@@ -17,13 +19,19 @@ import java.util.List;
 public class TicketMessageController {
 
     private final TicketMessageService ticketMessageService;
+    private final FileService fileService;
 
-    @PostMapping("/create")
-    public ResponseEntity<TicketMessageResponse> addTicketMessage(@RequestBody AddTicketRequest request){
-        return ResponseEntity.ok(ticketMessageService.addTicketMessage(request.ticketId(), request.messageText(), request.ticketAccessToken()));
+    @PostMapping(value="/create", consumes = "multipart/form-data")
+    public ResponseEntity<TicketMessageResponse> addTicketMessage(@RequestParam Long ticketId, @RequestParam String messageText, MultipartFile file, String customerToken){
+        return ResponseEntity.ok(ticketMessageService.addTicketMessage(ticketId, messageText, file, customerToken));
     }
 
-    @GetMapping("/get/{ticketId}")
+    @GetMapping("/files/download")
+    public ResponseEntity<Resource> getTicketMessageFile(@RequestParam String fileName, @RequestParam Long ticketId, @RequestParam String customerToken) throws MalformedURLException {
+        return ResponseEntity.ok(fileService.download(fileName, ticketId, customerToken));
+    }
+
+    @GetMapping("/ticket/{ticketId}")
     public ResponseEntity<List<TicketMessageResponse>> getMessagesByTicket(@PathVariable Long ticketId){
         return ResponseEntity.ok(ticketMessageService.getMessagesByTicket(ticketId));
     }

@@ -23,7 +23,7 @@ public class TicketController {
 
     @PostMapping("/add-ticket")
     private ResponseEntity<TicketEntity> addTicket(@RequestBody CreateTicketRequest request){
-        TicketEntity savedTicket = ticketService.addTicket(request.newTicket(), request.customerToken());
+        TicketEntity savedTicket = ticketService.addTicket(request.newTicket(), request.companyId(), request.customerToken());
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTicket);
     }
 
@@ -52,7 +52,7 @@ public class TicketController {
     }
 
     @PostMapping("/customer/all")
-    private ResponseEntity<List<TicketResponse>> getTicketByCustomer(@RequestBody String customerToken){
+    private ResponseEntity<List<TicketResponse>> getTicketsByCustomer(@RequestBody String customerToken){
         List<TicketResponse> tickets = ticketService.getTicketsByCustomer(customerToken);
         return ResponseEntity.ok(tickets);
     }
