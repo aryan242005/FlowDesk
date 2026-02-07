@@ -1,9 +1,8 @@
 package com.example.flow_desk_backend.service;
 
 import com.example.flow_desk_backend.dto.TicketMessageResponse;
-import com.example.flow_desk_backend.entity.AuthorType;
 import com.example.flow_desk_backend.entity.TicketEntity;
-import com.example.flow_desk_backend.entity.TicketMessageEntity;
+import com.example.flow_desk_backend.entity.TicketCommentEntity;
 import com.example.flow_desk_backend.entity.UserEntity;
 import com.example.flow_desk_backend.exception.AuthorizationException;
 import com.example.flow_desk_backend.exception.InvalidTokenException;
@@ -29,61 +28,46 @@ public class TicketMessageService {
     private final RedisService redisService;
     private final FileService fileService;
 
-    public TicketMessageResponse addTicketMessage(Long ticketId, String messageText, MultipartFile file, String customerToken){
+    public TicketMessageResponse addTicketMessage(Long ticketId, String messageText, MultipartFile file){
         TicketEntity ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
-        TicketMessageEntity newMessage = new TicketMessageEntity();
-        if(customerToken == null) {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            CustomUserDetails principal = (CustomUserDetails) auth.getPrincipal();
-            UserEntity loggedInUser = principal.getUser();
+        TicketCommentEntity newComment = new TicketCommentEntity();
 
-            newMessage.setTicket(ticket);
-            newMessage.setMessageText(messageText);
-            newMessage.setAuthorType(AuthorType.EMPLOYEE);
-            newMessage.setAuthorId(loggedInUser.getId());
-            newMessage.setAuthorName(loggedInUser.getEmployeeName());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails principal = (CustomUserDetails) auth.getPrincipal();
+        UserEntity loggedInUser = principal.getUser();
 
-        }else{
-            String customerEmail = redisService.get(customerToken);
-            if(customerEmail == null) throw new InvalidTokenException();
-
-            if(!ticket.getCustomer().getEmail().equals(customerEmail)) throw new AuthorizationException("\"Not authorized to add message to this ticket\"\n");
-
-            newMessage.setTicket(ticket);
-            newMessage.setMessageText(messageText);
-            newMessage.setAuthorId(ticket.getCustomer().getCustomerId());
-            newMessage.setAuthorName(ticket.getCustomer().getCustomerName());
-            newMessage.setAuthorType(AuthorType.CUSTOMER);
-        }
+        newComment.setTicket(ticket);
+        newComment.setCreatedBy(loggedInUser);
+        newComment.setCommentText(messageText);
 
         if(file != null && !file.isEmpty()){
             String path = fileService.store(file);
-            newMessage.setAttachmentName(file.getOriginalFilename());
-            newMessage.setAttachmentType(file.getContentType());
-            newMessage.setAttachmentSize(file.getSize());
-            newMessage.setAttachmentPath(path);
+            newComment.setAttachmentName(file.getOriginalFilename());
+            newComment.setAttachmentType(file.getContentType());
+            newComment.setAttachmentSize(file.getSize());
+            newComment.setAttachmentPath(path);
         }
-        TicketMessageEntity savedMessage = ticketMessageRepository.save(newMessage);
+        TicketCommentEntity savedMessage = ticketMessageRepository.save(newComment);
 
         return mapToDto(savedMessage);
     }
 
     public List<TicketMessageResponse> getMessagesByTicket(Long ticketId){
-        List<TicketMessageEntity> ticketMessages = ticketMessageRepository.findByTicketTicketId(ticketId);
+        List<TicketCommentEntity> ticketMessages = ticketMessageRepository.findByTicketTicketId(ticketId);
 
         return ticketMessages.stream().map(this::mapToDto).toList();
     }
 
-    public String markAllAsRead(Long ticketId, AuthorType authorType){
-        List<TicketMessageEntity> messages = ticketMessageRepository.markAsRead(ticketId, authorType);
-        return "Marked as read";
-    }
+//    public String markAllAsRead(Long ticketId, AuthorType authorType){
+//        List<TicketCommentEntity> messages = ticketMessageRepository.markAsRead(ticketId, authorType);
+//        return "Marked as read";
+//    }
 
-    public TicketMessageResponse mapToDto(TicketMessageEntity ticketMessage){
+    public TicketMessageResponse mapToDto(TicketCommentEntity ticketMessage){
         return new TicketMessageResponse(
-                ticketMessage.getTicketMessageId(),
-                ticketMessage.getMessageText(),
-                ticketMessage.getAuthorName(),
+                ticketMessage.getTicketCommentId(),
+                ticketMessage.getCommentText(),
+                ticketMessage.getCreatedBy().getEmployeeName(),
                 ticketMessage.getCreatedAt()
         );
     }

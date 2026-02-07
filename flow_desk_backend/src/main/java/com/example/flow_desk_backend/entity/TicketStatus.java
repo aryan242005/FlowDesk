@@ -1,6 +1,6 @@
 package com.example.flow_desk_backend.entity;
 
-public enum Status {
+public enum TicketStatus {
     OPEN,
     IN_PROGRESS,
     REJECTED,

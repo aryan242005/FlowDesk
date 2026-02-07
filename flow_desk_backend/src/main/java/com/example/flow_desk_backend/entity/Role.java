@@ -1,7 +1,9 @@
 package com.example.flow_desk_backend.entity;
 
 public enum Role {
-    EMPLOYEE,
+    MANAGER,
+    DEVELOPER,
+    TESTER,
     COMPANY_ADMIN,
     SUPER_ADMIN
 }

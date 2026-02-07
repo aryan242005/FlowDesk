@@ -23,7 +23,7 @@ public class TicketMessageController {
 
     @PostMapping(value="/create", consumes = "multipart/form-data")
     public ResponseEntity<TicketMessageResponse> addTicketMessage(@RequestParam Long ticketId, @RequestParam String messageText, MultipartFile file, String customerToken){
-        return ResponseEntity.ok(ticketMessageService.addTicketMessage(ticketId, messageText, file, customerToken));
+        return ResponseEntity.ok(ticketMessageService.addTicketMessage(ticketId, messageText, file));
     }
 
     @GetMapping("/files/download")

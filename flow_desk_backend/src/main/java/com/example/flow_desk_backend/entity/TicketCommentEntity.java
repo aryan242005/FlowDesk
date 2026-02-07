@@ -8,46 +8,43 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
-@Table(name="ticket_message")
+@Table(name="ticket_comment")
 @Getter
 @Setter
-public class TicketMessageEntity {
+public class TicketCommentEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long ticketMessageId;
+    private Long ticketCommentId;
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name="ticket_id")
+    @JoinColumn(name="ticket_id", nullable = false)
     private TicketEntity ticket;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable=false)
-    private AuthorType authorType;
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name="company_id", nullable=false)
+    private CompanyEntity company;
 
-    @Column(name = "author_id")
-    private Long authorId;
-
-    @Column(nullable = false)
-    private String authorName;
+    @ManyToOne
+    @JoinColumn(name="created_by", nullable=false)
+    private UserEntity createdBy;
     
-    @Size(max=2000, message="Message too long")
-    @NotBlank(message="Ticket message cannot be empty")
-    private String messageText;
+    @Size(max=2000, message="Comment too long")
+    @NotBlank(message="Ticket comment cannot be empty")
+    private String commentText;
 
     private String attachmentName;
     private String attachmentType;
     private Long attachmentSize;
     private String attachmentPath;
 
+    @CreationTimestamp
     private LocalDateTime createdAt;    
 
-    private Boolean read = false;
-
-    public TicketMessageEntity(){
-        this.createdAt = LocalDateTime.now();
-    }
+    private Boolean isRead = false;
 }

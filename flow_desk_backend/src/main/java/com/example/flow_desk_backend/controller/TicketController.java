@@ -23,7 +23,7 @@ public class TicketController {
 
     @PostMapping("/add-ticket")
     private ResponseEntity<TicketEntity> addTicket(@RequestBody CreateTicketRequest request){
-        TicketEntity savedTicket = ticketService.addTicket(request.newTicket(), request.companyId(), request.customerToken());
+        TicketEntity savedTicket = ticketService.addTicket(request.projectId(), request.title(), request.description(), request.priority());
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTicket);
     }
 
@@ -45,15 +45,9 @@ public class TicketController {
         return ResponseEntity.ok(existingTicket);
     }
 
-    @GetMapping("employee/all")
-    private ResponseEntity<List<TicketResponse>> getAllTickets(){
-        List<TicketResponse> tickets = ticketService.getAllTickets();
-        return ResponseEntity.ok(tickets);
-    }
-
-    @PostMapping("/customer/all")
-    private ResponseEntity<List<TicketResponse>> getTicketsByCustomer(@RequestBody String customerToken){
-        List<TicketResponse> tickets = ticketService.getTicketsByCustomer(customerToken);
+    @GetMapping("employee/all/company_id")
+    private ResponseEntity<List<TicketResponse>> getAllTickets(@RequestParam Long companyId){
+        List<TicketResponse> tickets = ticketService.getAllTickets(companyId);
         return ResponseEntity.ok(tickets);
     }
 }
