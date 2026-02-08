@@ -130,6 +130,7 @@ public class TicketService {
             throw new AuthorizationException("Only assigned employee can update status");
         }
 
+        // Update ticket status
         ticket.setStatus(status);
         TicketEntity updatedTicket = ticketRepository.save(ticket);
 
@@ -169,7 +170,7 @@ public class TicketService {
     public List<TicketResponse> getAllTickets(Long projectId) {
         UserEntity loggedInUser = getLoggedInUser();
 
-        ProjectEntity project = projectRepository.findById(projectId).orElseThrow(() -> new ProjectNotFoundException("Project not found"));
+        ProjectEntity project = projectRepository.findById(projectId).orElseThrow(() -> new ProjectNotFoundException("Project with id " + projectId + " not found"));
 
         // Check if project belongs to loggedInUser's company
         if(!project.getCompany().getCompanyId().equals(loggedInUser.getCompany().getCompanyId())){

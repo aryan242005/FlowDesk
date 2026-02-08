@@ -21,31 +21,31 @@ public class TicketController {
     
     private final TicketService ticketService;
 
-    @PostMapping("/add-ticket")
+    @PostMapping("member/add-ticket")
     private ResponseEntity<TicketEntity> addTicket(@RequestBody CreateTicketRequest request){
         TicketEntity savedTicket = ticketService.addTicket(request.projectId(), request.title(), request.description(), request.priority());
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTicket);
     }
 
-    @PutMapping("employee/assign-employee")
+    @PutMapping("manager/assign-employee")
     private ResponseEntity<TicketResponse> assignEmployee(@RequestBody AssignEmployeeRequest request ){
         TicketResponse savedTicket = ticketService.assignEmployee(request.employee_id(), request.ticket_id());
         return ResponseEntity.ok(savedTicket);
     }
 
-    @PutMapping("employee/update-ticket-status")
+    @PutMapping("member/update-ticket-status")
     private ResponseEntity<TicketResponse> updateTicketStatus(@RequestBody UpdateTicketStatusRequest request){
         TicketResponse updatedTicket = ticketService.updateTicketStatus(request.ticket_id(), request.status());
         return ResponseEntity.ok(updatedTicket);
     }
 
-    @GetMapping("employee/{ticket_id}")
+    @GetMapping("member/{ticket_id}")
     private ResponseEntity<TicketResponse> getTicketById(@PathVariable Long ticket_id){
         TicketResponse existingTicket = ticketService.getTicketById(ticket_id);
         return ResponseEntity.ok(existingTicket);
     }
 
-    @GetMapping("employee/all/company_id")
+    @GetMapping("member/all/company_id")
     private ResponseEntity<List<TicketResponse>> getAllTickets(@RequestParam Long companyId){
         List<TicketResponse> tickets = ticketService.getAllTickets(companyId);
         return ResponseEntity.ok(tickets);

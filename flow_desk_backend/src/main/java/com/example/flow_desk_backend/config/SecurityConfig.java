@@ -37,7 +37,8 @@ public class SecurityConfig {
             .requestMatchers("/auth/**").permitAll()
             .requestMatchers("/message/**").permitAll()
             .requestMatchers("/admin/**").hasRole("COMPANY_ADMIN")
-            .requestMatchers("/employee/**").hasAnyRole("COMPANY_ADMIN", "EMPLOYEE")
+            .requestMatchers("/manager/**").hasAnyRole("COMPANY_ADMIN", "MANAGER")
+            .requestMatchers("/member/**").hasAnyRole("COMPANY_ADMIN", "MANAGER","DEVELOPER", "TESTER")
             .requestMatchers("/super-admin/**").hasAnyRole("SUPER_ADMIN")
             .anyRequest().authenticated()
         ).addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

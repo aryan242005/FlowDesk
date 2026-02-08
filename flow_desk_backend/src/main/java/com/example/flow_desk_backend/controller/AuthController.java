@@ -38,7 +38,6 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
-    private final CustomerRepository customerRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;

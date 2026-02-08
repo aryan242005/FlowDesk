@@ -36,8 +36,8 @@ public class TicketMessageController {
         return ResponseEntity.ok(ticketMessageService.getMessagesByTicket(ticketId));
     }
 
-    @PutMapping("/markAsRead")
-    public ResponseEntity<String> markAllAsRead(@RequestBody MarkAsReadRequest request){
-        return ResponseEntity.ok(ticketMessageService.markAllAsRead(request.ticketId(), request.authorType()));
-    }
+//    @PutMapping("/markAsRead")
+//    public ResponseEntity<String> markAllAsRead(@RequestBody MarkAsReadRequest request){
+//        return ResponseEntity.ok(ticketMessageService.markAllAsRead(request.ticketId(), request.authorType()));
+//    }
 }
