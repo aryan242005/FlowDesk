@@ -26,21 +26,12 @@ public class TicketService {
     private final ProjectRepository projectRepository;
 
     // Create Ticket
-    public TicketEntity addTicket(Long projectId, String title, String description, TicketPriority priority) {
+    public TicketResponse createTicket(Long projectId, String title, String description, TicketPriority priority) {
         // Find Project for which issue is to be raised
         ProjectEntity project = projectRepository.findById(projectId).orElseThrow(() -> new ProjectNotFoundException("Project with id " + projectId + " not found"));
 
         // Find current loggedInUser user
-        UserEntity loggedInUser = getLoggedInUser();
-
-        // Check if project belongs to loggedInUser's company
-        if(!project.getCompany().getCompanyId().equals(loggedInUser.getCompany().getCompanyId())){
-            throw new AuthorizationException("You cannot create ticket in another company's project");
-        }
-
-        if(!project.getProjectMembers().contains(loggedInUser)){
-            throw new AuthorizationException("Only project members can add ticket");
-        }
+        UserEntity loggedInUser = validateAndGetCurrentUser(project, "You cannot create ticket in another company's project", "Only project members can add ticket");
 
         // Create ticket and assign data to it
         TicketEntity newTicket = new TicketEntity();
@@ -48,33 +39,24 @@ public class TicketService {
         newTicket.setTicketDescription(description);
         newTicket.setPriority(priority);
 
-
         // Set other details for new ticket
         newTicket.setCreatedBy(loggedInUser);
         newTicket.setProject(project);
         newTicket.setCompany(loggedInUser.getCompany());
 
-        // Save and return new ticket
-        return ticketRepository.save(newTicket);
+        // Save new ticket
+        TicketEntity savedTicket = ticketRepository.save(newTicket);
+
+        return mapToDto(savedTicket);
     }
 
     public TicketResponse assignEmployee(Long employeeId, Long ticketId) {
         // Find ticket to which you want to assign employee
         TicketEntity ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
         // Fetch loggedInUser
-        UserEntity loggedInUser = getLoggedInUser();
+        UserEntity loggedInUser = validateAndGetCurrentUser(ticket.getProject(), "You cannot assign employee to tickets of another company's project", "Only project members can assign employee");
         // Find employee to whom ticket is to be assigned
         UserEntity employee = userRepository.findById(employeeId).orElseThrow(() -> new UserNotFoundException("Employee not found"));
-
-        // Check if project belongs to loggedInUser's company
-        if(!ticket.getProject().getCompany().getCompanyId().equals(loggedInUser.getCompany().getCompanyId())){
-            throw new AuthorizationException("You cannot assign employee to tickets of another company's project");
-        }
-
-        // Check if current user is member of project or not
-        if(!ticket.getProject().getProjectMembers().contains(loggedInUser)){
-            throw new AuthorizationException("Only project members can assign employee");
-        }
 
         // Set employee to ticket
         ticket.setAssignedTo(employee);
@@ -112,18 +94,8 @@ public class TicketService {
             throw new EmployeeNotAssignedException("Employee must be assigned to update status");
         }
 
-        // Get loggedInUser
-        UserEntity loggedInUser = getLoggedInUser();
-
-        // Check if project belongs to loggedInUser's company
-        if(!ticket.getProject().getCompany().getCompanyId().equals(loggedInUser.getCompany().getCompanyId())){
-            throw new AuthorizationException("You cannot update tickets of another company's project");
-        }
-
-        // Check if current user is member of project or not
-        if(!ticket.getProject().getProjectMembers().contains(loggedInUser)){
-            throw new AuthorizationException("Only project members can update ticket");
-        }
+        // Fetch loggedInUser
+        UserEntity loggedInUser = validateAndGetCurrentUser(ticket.getProject(),"You cannot update tickets of another company's project", "Only project members can update ticket");
 
         // Check if only assignee is updating status or not
         if(!ticket.getAssignedTo().getId().equals(loggedInUser.getId())){
@@ -142,17 +114,7 @@ public class TicketService {
         TicketEntity ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
 
         // Fetch loggedInUser
-        UserEntity loggedInUser = getLoggedInUser();
-
-        // Check if project belongs to loggedInUser's company
-        if(!ticket.getProject().getCompany().getCompanyId().equals(loggedInUser.getCompany().getCompanyId())){
-            throw new AuthorizationException("You cannot view tickets of another company's project");
-        }
-
-        // Check if current user is member of project or not
-        if(!ticket.getProject().getProjectMembers().contains(loggedInUser)){
-            throw new AuthorizationException("Only project members can view ticket");
-        }
+        UserEntity loggedInUser = validateAndGetCurrentUser(ticket.getProject(), "You cannot view tickets of another company's project", "Only project members can view ticket");
 
         EmployeeResponse employeeResponse = getEmployeeResponse(ticket);
 
@@ -168,19 +130,9 @@ public class TicketService {
     }
 
     public List<TicketResponse> getAllTickets(Long projectId) {
-        UserEntity loggedInUser = getLoggedInUser();
-
         ProjectEntity project = projectRepository.findById(projectId).orElseThrow(() -> new ProjectNotFoundException("Project with id " + projectId + " not found"));
 
-        // Check if project belongs to loggedInUser's company
-        if(!project.getCompany().getCompanyId().equals(loggedInUser.getCompany().getCompanyId())){
-            throw new AuthorizationException("You cannot view tickets of another company's project");
-        }
-
-        // Check if current user is member of project or not
-        if(!project.getProjectMembers().contains(loggedInUser)){
-            throw new AuthorizationException("\"Only project members can view tickets");
-        }
+        UserEntity loggedInUser = validateAndGetCurrentUser(project, "You cannot view tickets of another company's project", "Only project members can view tickets");
 
         List<TicketEntity> tickets = ticketRepository.findByProject(project);
         return tickets.stream().map(this::mapToDto).toList();
@@ -217,9 +169,21 @@ public class TicketService {
         );
     }
 
-    public UserEntity getLoggedInUser(){
+    public UserEntity validateAndGetCurrentUser(ProjectEntity project, String message1, String message2){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails principal = (CustomUserDetails) auth.getPrincipal();
-        return principal.getUser();
+        UserEntity loggedInUser = principal.getUser();
+
+        // Check if project belongs to loggedInUser's company
+        if(!project.getCompany().getCompanyId().equals(loggedInUser.getCompany().getCompanyId())){
+            throw new AuthorizationException(message1);
+        }
+
+        // Check if current user is member of project or not
+        if(!project.getProjectMembers().contains(loggedInUser)){
+            throw new AuthorizationException(message2);
+        }
+
+        return loggedInUser;
     }
 }

@@ -47,7 +47,7 @@ public class ProjectEntity {
     private List<UserEntity> projectMembers;
 
     @Enumerated(EnumType.STRING)
-    private ProjectStatus status;
+    private ProjectStatus status = ProjectStatus.ACTIVE;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
