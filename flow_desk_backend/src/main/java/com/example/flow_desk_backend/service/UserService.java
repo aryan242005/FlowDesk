@@ -3,6 +3,7 @@ package com.example.flow_desk_backend.service;
 import com.example.flow_desk_backend.dto.ValidateOtpResponse;
 import com.example.flow_desk_backend.entity.ProjectEntity;
 import com.example.flow_desk_backend.exception.AuthorizationException;
+import com.example.flow_desk_backend.exception.InvalidOtpException;
 import com.example.flow_desk_backend.exception.ProjectNotFoundException;
 import com.example.flow_desk_backend.exception.UserNotFoundException;
 import com.example.flow_desk_backend.repository.ProjectRepository;
@@ -99,7 +100,7 @@ public class UserService {
     }
 
     // Update password request when user click's 'forgot password', otp is sent to user
-    public String updatePasswordRequest(String employeeEmail){
+    public void updatePasswordRequest(String employeeEmail){
         // Check employee exists or not
         UserEntity employee = userRepository.findByEmployeeEmail(employeeEmail).orElseThrow(() -> new UserNotFoundException("User not found with email : " + employeeEmail));
 
@@ -113,8 +114,6 @@ public class UserService {
         // Set TTL of OTP and store in redis
         final Duration OTP_TTL = Duration.ofMinutes(5);
         redisService.set("FORGOT_PWD_OTP:"+employeeEmail, hashedOtp, OTP_TTL);
-
-        return "OTP Send Successfully";
     }
 
     // Verifies OTP and sends a resetToken to reset password
@@ -123,12 +122,12 @@ public class UserService {
         String hashedOtp = redisService.get("FORGOT_PWD_OTP:"+employeeEmail);
 
         if(hashedOtp == null){
-            return new ValidateOtpResponse("INVALID", null);
+            throw new InvalidOtpException("Invalid OTP");
         }
 
         // Validate OTP
         if(!passwordEncoder.matches(otp, hashedOtp)){
-            return new ValidateOtpResponse("INVALID", null);
+            throw new InvalidOtpException("Invalid OTP");
         }
 
         // Generate resetToken, set it as key, and employee email as value
@@ -138,9 +137,9 @@ public class UserService {
         redisService.set(resetToken, employeeEmail, Duration.ofMinutes(5));
 
         // Delete OTP from redis after validation
-        redisService.delete("FORGOT_PWD_OTP:"+employeeEmail);
+        redisService.delete("FORGOT_PWD_OTP:" + employeeEmail);
 
-        return new ValidateOtpResponse("VALID", resetToken);
+        return new ValidateOtpResponse(resetToken);
     }
 
     // User sends new password and reset token

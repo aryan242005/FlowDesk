@@ -46,7 +46,6 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signUp(@RequestBody UserEntity user) {
-
         CompanyEntity company = companyRepository.save(user.getCompany());
         CompanyEntity savedCompany = companyRepository.save(company);
 

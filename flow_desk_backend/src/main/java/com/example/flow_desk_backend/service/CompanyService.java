@@ -1,5 +1,8 @@
 package com.example.flow_desk_backend.service;
 
+import com.example.flow_desk_backend.dto.CompanyResponse;
+import com.example.flow_desk_backend.entity.Role;
+import com.example.flow_desk_backend.exception.AuthorizationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -20,15 +23,42 @@ public class CompanyService {
 
     private final CompanyRepository companyRepository;
 
-    public List<CompanyEntity> getAllCompanies() {
-        return companyRepository.findAll();
+    public List<CompanyResponse> getAllCompanies() {
+        // Fetch current user
+        UserEntity loggedInUser = getLoggedInUser();
+
+        // Check if current user is super admin
+        if(!loggedInUser.getRole().equals(Role.SUPER_ADMIN)){
+            throw new AuthorizationException("You cannot view all the companies");
+        }
+
+        List<CompanyEntity> companies = companyRepository.findAll();
+
+        return companies.stream().map(this::mapToDto).toList();
     }
 
-    public CompanyEntity getCompany(){
+    public CompanyResponse getCompany(){
+        // Fetch user
+        UserEntity loggedInUser = getLoggedInUser();
+
+        // Map and return company
+        return mapToDto(loggedInUser.getCompany());
+    }
+
+    // Utility Functions
+
+    public CompanyResponse mapToDto(CompanyEntity company){
+        return new CompanyResponse(
+                company.getCompanyId(),
+                company.getCompanyName(),
+                company.getCompanyAddress(),
+                company.getCompanyEmail()
+        );
+    }
+
+    public UserEntity getLoggedInUser(){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails principal = (CustomUserDetails) auth.getPrincipal();
-        UserEntity loggedInUser = principal.getUser();
-
-        return loggedInUser.getCompany();
+        return principal.getUser();
     }
 }

@@ -14,6 +14,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "attachment")
@@ -27,8 +28,8 @@ public class AttachmentEntity {
 
     @NotNull
     @ManyToOne
-    @JoinColumn(name = "ticket_id")
-    private TicketEntity ticket;
+    @JoinColumn(name = "ticket_comment_id")
+    private TicketCommentEntity ticketComment;
 
     @NotBlank(message = "File name cannot be empty")
     @Size(max = 255)
@@ -40,11 +41,8 @@ public class AttachmentEntity {
     private String mimeType;
 
     @NotNull
-    private byte[] fileData;
+    private String filePath;
 
+    @CreationTimestamp
     private LocalDateTime createdAt;
-
-    public AttachmentEntity() {
-        this.createdAt = LocalDateTime.now();
-    }
 }

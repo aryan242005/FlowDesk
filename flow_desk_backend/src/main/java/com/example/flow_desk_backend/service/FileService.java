@@ -1,5 +1,6 @@
 package com.example.flow_desk_backend.service;
 
+import com.example.flow_desk_backend.dto.GetTicketMessageFileRequest;
 import com.example.flow_desk_backend.entity.TicketEntity;
 import com.example.flow_desk_backend.entity.UserEntity;
 import com.example.flow_desk_backend.exception.AuthorizationException;
@@ -30,8 +31,8 @@ public class FileService {
     private final TicketRepository ticketRepository;
     private final RedisService redisService;
 
-    public String store(MultipartFile file){
-        try{
+    public String store(MultipartFile file) {
+        try {
             Files.createDirectories(root);
 
             String originalName = file.getOriginalFilename();
@@ -41,24 +42,24 @@ public class FileService {
             Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
 
             return "ticketMessageFiles/" + fileName;
-        }catch(Exception e){
+        } catch (Exception e) {
             throw new RuntimeException("File upload failed", e);
         }
     }
 
-    public Resource download(String fileName, Long ticketId, String customerToken) throws MalformedURLException {
-        TicketEntity ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
-        if(customerToken == null){
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            CustomUserDetails principal = (CustomUserDetails) auth.getPrincipal();
-            UserEntity loggedInUser = principal.getUser();
+    public Resource download(GetTicketMessageFileRequest request) throws MalformedURLException {
+        TicketEntity ticket = ticketRepository.findById(request.ticketId()).orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
 
-            if(!loggedInUser.getEmployeeEmail().equals(ticket.getEmployee().getEmployeeEmail())) throw new AuthorizationException("Not authorized to download this file");
-        }else{
-            String customerEmail = redisService.get(customerToken);
-            if(customerEmail == null || !customerEmail.equals(ticket.getCustomer().getEmail())) throw new AuthorizationException("Not authorized to download this file");
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails principal = (CustomUserDetails) auth.getPrincipal();
+        UserEntity loggedInUser = principal.getUser();
+
+        // Check if current user is member of the project
+        if (!ticket.getProject().getProjectMembers().contains(loggedInUser)) {
+            throw new AuthorizationException("Only project members can download the ticket files");
         }
-        Path filePath = Paths.get("uploads/ticketMessageFiles").resolve(fileName);
+
+        Path filePath = Paths.get("uploads/ticketMessageFiles").resolve(request.fileName());
         return new UrlResource(filePath.toUri());
     }
 }

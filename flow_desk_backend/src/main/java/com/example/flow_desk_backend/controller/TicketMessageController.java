@@ -1,11 +1,11 @@
 package com.example.flow_desk_backend.controller;
 
-import com.example.flow_desk_backend.dto.MarkAsReadRequest;
-import com.example.flow_desk_backend.dto.TicketMessageResponse;
+import com.example.flow_desk_backend.dto.*;
 import com.example.flow_desk_backend.service.FileService;
-import com.example.flow_desk_backend.service.TicketMessageService;
+import com.example.flow_desk_backend.service.TicketCommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,26 +18,39 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TicketMessageController {
 
-    private final TicketMessageService ticketMessageService;
+    private final TicketCommentService ticketCommentService;
     private final FileService fileService;
 
     @PostMapping(value="/create", consumes = "multipart/form-data")
-    public ResponseEntity<TicketMessageResponse> addTicketMessage(@RequestParam Long ticketId, @RequestParam String messageText, MultipartFile file, String customerToken){
-        return ResponseEntity.ok(ticketMessageService.addTicketMessage(ticketId, messageText, file));
+    public ResponseEntity<ApiResponse<TicketMessageResponse>> addTicketMessage(AddTicketMessageRequest request){
+        ApiResponse<TicketMessageResponse> response = new ApiResponse<>(
+                true,
+                "Ticket message added successfully",
+                ticketCommentService.addTicketMessage(request)
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/files/download")
-    public ResponseEntity<Resource> getTicketMessageFile(@RequestParam String fileName, @RequestParam Long ticketId, @RequestParam String customerToken) throws MalformedURLException {
-        return ResponseEntity.ok(fileService.download(fileName, ticketId, customerToken));
+    public ResponseEntity<ApiResponse<Resource>> getTicketMessageFile(GetTicketMessageFileRequest request) throws MalformedURLException {
+        ApiResponse<Resource> response = new ApiResponse<>(
+                true,
+                "File found successfully",
+                fileService.download(request)
+        );
+
+        return ResponseEntity.status(HttpStatus.FOUND).body(response);
     }
 
     @GetMapping("/ticket/{ticketId}")
-    public ResponseEntity<List<TicketMessageResponse>> getMessagesByTicket(@PathVariable Long ticketId){
-        return ResponseEntity.ok(ticketMessageService.getMessagesByTicket(ticketId));
-    }
+    public ResponseEntity<ApiResponse<List<TicketMessageResponse>>> getMessagesByTicket(@PathVariable Long ticketId){
+        List<TicketMessageResponse> tickets = ticketCommentService.getMessagesByTicket(ticketId);
+        ApiResponse<List<TicketMessageResponse>> response = new ApiResponse<>(
+                true,
+                tickets.size() + " messages found and fetched successfully",
+                tickets
+        );
 
-//    @PutMapping("/markAsRead")
-//    public ResponseEntity<String> markAllAsRead(@RequestBody MarkAsReadRequest request){
-//        return ResponseEntity.ok(ticketMessageService.markAllAsRead(request.ticketId(), request.authorType()));
-//    }
+        return ResponseEntity.status(HttpStatus.FOUND).body(response);
+    }
 }

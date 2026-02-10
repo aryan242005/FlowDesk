@@ -26,7 +26,7 @@ public class CompanyEntity {
     private String companyName;
 
     @NotBlank(message="Address cannot be blank")
-    private String address;
+    private String companyAddress;
     
     @NotBlank(message="Email cannot be blank")
     private String companyEmail;

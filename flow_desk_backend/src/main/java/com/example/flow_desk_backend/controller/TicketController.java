@@ -68,15 +68,4 @@ public class TicketController {
         );
         return ResponseEntity.status(HttpStatus.FOUND).body(response);
     }
-
-    @GetMapping("member/all/company_id")
-    private ResponseEntity<ApiResponse<List<TicketResponse>>> getAllTickets(@RequestParam Long companyId){
-        List<TicketResponse> tickets = ticketService.getAllTickets(companyId);
-        ApiResponse<List<TicketResponse>> response = new ApiResponse<>(
-                true,
-                tickets.size() + " tickets found and fetched successfully",
-                tickets
-        );
-        return ResponseEntity.status(HttpStatus.FOUND).body(response);
-    }
 }

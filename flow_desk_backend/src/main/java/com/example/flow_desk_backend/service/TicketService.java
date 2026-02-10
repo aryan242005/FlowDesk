@@ -129,7 +129,7 @@ public class TicketService {
         );
     }
 
-    public List<TicketResponse> getAllTickets(Long projectId) {
+    public List<TicketResponse> getAllProjectTickets(Long companyId, Long projectId) {
         ProjectEntity project = projectRepository.findById(projectId).orElseThrow(() -> new ProjectNotFoundException("Project with id " + projectId + " not found"));
 
         UserEntity loggedInUser = validateAndGetCurrentUser(project, "You cannot view tickets of another company's project", "Only project members can view tickets");

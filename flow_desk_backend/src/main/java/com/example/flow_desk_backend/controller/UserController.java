@@ -18,34 +18,57 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/manager/add-employee")
-    public ResponseEntity<EmployeeResponse> addMemberEmployee(@RequestBody CreateEmployeeRequest request){
-        EmployeeResponse savedEmployee = userService.addMemberEmployee(request.employee());
+    public ResponseEntity<ApiResponse<EmployeeResponse>> addMemberEmployee(@RequestBody CreateEmployeeRequest request){
+        ApiResponse<EmployeeResponse> response = new ApiResponse<>(
+                true,
+                "Employee created successfully",
+                userService.addMemberEmployee(request.employee())
+        );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedEmployee);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/admin/add-employee")
-    public ResponseEntity<EmployeeResponse> addManagerEmployee(@RequestBody UserEntity newEmployee){
-        EmployeeResponse savedEmployee = userService.addManagerEmployee(newEmployee);
+    public ResponseEntity<ApiResponse<EmployeeResponse>> addManagerEmployee(@RequestBody UserEntity newEmployee){
+        ApiResponse<EmployeeResponse> response = new ApiResponse<>(
+                true,
+                "Employee created successfully",
+                userService.addManagerEmployee(newEmployee)
+        );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedEmployee);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/manager/update-employee-status/{employeeId}")
-    public ResponseEntity<EmployeeResponse> updateEmployeeStatus(@PathVariable Long employeeId){
-        EmployeeResponse savedEmployee = userService.updateEmployeeStatus(employeeId);
+    public ResponseEntity<ApiResponse<EmployeeResponse>> updateEmployeeStatus(@PathVariable Long employeeId){
+        EmployeeResponse employee = userService.updateEmployeeStatus(employeeId);
+        String status = employee.isActive() ? "active" : "inactive";
+        ApiResponse<EmployeeResponse> response = new ApiResponse<>(
+                true,
+                "Employee with id " + employeeId + " is " + status,
+                employee
+        );
 
-        return ResponseEntity.ok(savedEmployee);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PostMapping("/update-password-request")
-    public ResponseEntity<String> updatePasswordRequest(@RequestBody ForgotPasswordRequest request){
-        return ResponseEntity.ok(userService.updatePasswordRequest(request.employeeEmail()));
+    public ResponseEntity<ApiResponse<String>> updatePasswordRequest(@RequestBody ForgotPasswordRequest request){
+        userService.updatePasswordRequest(request.employeeEmail());
+        ApiResponse<String> response = new ApiResponse<>(true, "OTP Sent Successfully", null);
+
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 
     @PostMapping("/validate-otp")
-    public ResponseEntity<ValidateOtpResponse> validateOtp(@RequestBody ValidateOtpRequest request){
-        return ResponseEntity.ok(userService.validateOtp(request.employeeEmail(), request.otp()));
+    public ResponseEntity<ApiResponse<ValidateOtpResponse>> validateOtp(@RequestBody ValidateOtpRequest request){
+        ApiResponse<ValidateOtpResponse> response = new ApiResponse<>(
+                true,
+                "OTP is Valid",
+                userService.validateOtp(request.employeeEmail(), request.otp())
+        );
+
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 
     @PostMapping("/update-employee-password")

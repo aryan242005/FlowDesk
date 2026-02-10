@@ -1,6 +1,7 @@
 package com.example.flow_desk_backend.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -38,10 +39,7 @@ public class TicketCommentEntity {
     @NotBlank(message="Ticket comment cannot be empty")
     private String commentText;
 
-    private String attachmentName;
-    private String attachmentType;
-    private Long attachmentSize;
-    private String attachmentPath;
+    private List<AttachmentEntity> files;
 
     @CreationTimestamp
     private LocalDateTime createdAt;    
