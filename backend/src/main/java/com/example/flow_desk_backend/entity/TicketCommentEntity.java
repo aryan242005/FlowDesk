@@ -39,6 +39,8 @@ public class TicketCommentEntity {
     @NotBlank(message="Ticket comment cannot be empty")
     private String commentText;
 
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "ticket_comment_id")
     private List<AttachmentEntity> files;
 
     @CreationTimestamp

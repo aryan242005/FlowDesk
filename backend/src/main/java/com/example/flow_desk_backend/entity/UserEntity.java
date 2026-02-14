@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,6 +30,7 @@ public class UserEntity {
     private Long id;
     
     @NotNull
+    @Valid
     @ManyToOne
     @JoinColumn(name="company_id")
     private CompanyEntity company;
@@ -56,11 +58,9 @@ public class UserEntity {
     @Pattern(regexp="^[0-9]{10}$", message="Phone must be 10 digits")
     private String phoneNumber;
 
-    @NotNull
     private Boolean isActive = true;
 
     @Enumerated(EnumType.STRING)
-    @NotNull
     private Role role;
 
     public UserEntity(){

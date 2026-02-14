@@ -75,12 +75,6 @@ public class UserController {
     public ResponseEntity<String> updateEmployeePassword(@RequestBody UpdatePasswordRequest request){
         return ResponseEntity.ok(userService.updateEmployeePassword(request.resetToken(), request.newPassword()));
     }
-
-    @GetMapping("/manager/project/{projectId}/employees")
-    public ResponseEntity<List<EmployeeResponse>> getAllMembersByProject(@PathVariable Long projectId){
-        return ResponseEntity.ok(userService.getAllMemberByProject(projectId));
-    }
-
     @GetMapping("/admin/employees/members")
     public ResponseEntity<List<EmployeeResponse>> getAllMemberEmployees(){
         return ResponseEntity.ok(userService.getAllMemberEmployees());

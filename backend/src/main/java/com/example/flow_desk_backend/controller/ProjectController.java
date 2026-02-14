@@ -18,7 +18,7 @@ public class ProjectController {
 
     private final ProjectService projectService;
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<ApiResponse<ProjectResponse>> createProject(@RequestBody CreateProjectRequest request){
         ApiResponse<ProjectResponse> response = new ApiResponse<>(
                 true,
@@ -29,7 +29,7 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PostMapping
+    @PostMapping("/add-member")
     public ResponseEntity<ApiResponse<ProjectResponse>> addProjectMember(@RequestBody AddProjectMemberRequest request){
         ApiResponse<ProjectResponse> response = new ApiResponse<>(
                 true,

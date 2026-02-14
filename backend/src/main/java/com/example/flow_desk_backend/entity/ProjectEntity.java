@@ -44,6 +44,12 @@ public class ProjectEntity {
     @JoinColumn(name="created_by", nullable = false)
     private UserEntity createdBy;
 
+    @ManyToMany
+    @JoinTable(
+            name="project_members",
+            joinColumns = @JoinColumn(name="project_id"),
+            inverseJoinColumns = @JoinColumn(name="user_id")
+    )
     private List<UserEntity> projectMembers;
 
     @Enumerated(EnumType.STRING)

@@ -162,30 +162,6 @@ public class UserService {
         return "Password Updated Successfully";
     }
 
-    public List<EmployeeResponse> getAllMemberByProject(Long projectId){
-        // Fetch current user
-        UserEntity loggedInUser = getLoggedInUser();
-
-        // Fetch project
-        ProjectEntity project = projectRepository.findById(projectId).orElseThrow(() -> new ProjectNotFoundException("Project with id " + projectId + " not found"));
-
-        // Check if current user and project belong to same company
-        if(!loggedInUser.getCompany().getCompanyId().equals(project.getCompany().getCompanyId())){
-            throw new AuthorizationException("You cannot view members of other company's project");
-        }
-
-        // Check if current user is member of project
-        if(!project.getProjectMembers().contains(loggedInUser)){
-            throw new AuthorizationException("You cannot view members of project you are not part of");
-        }
-
-        // Fetch users by project
-        List<UserEntity> projectMembers = userRepository.findByProjectId(projectId);
-
-        // Map and return project members
-        return projectMembers.stream().map(this::mapToDto).toList();
-    }
-
     public List<EmployeeResponse> getAllMemberEmployees(){
         // Fetch current user
         UserEntity loggedInUser = getLoggedInUser();

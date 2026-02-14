@@ -1,5 +1,6 @@
 package com.example.flow_desk_backend.config;
 
+import com.example.flow_desk_backend.security.LoginRateLimitingFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +26,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final LoginRateLimitingFilter loginRateLimitFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
@@ -41,7 +43,8 @@ public class SecurityConfig {
             .requestMatchers("/member/**").hasAnyRole("COMPANY_ADMIN", "MANAGER","DEVELOPER", "TESTER")
             .requestMatchers("/super-admin/**").hasAnyRole("SUPER_ADMIN")
             .anyRequest().authenticated()
-        ).addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        ).addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

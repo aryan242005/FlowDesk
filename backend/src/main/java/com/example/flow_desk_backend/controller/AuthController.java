@@ -2,6 +2,7 @@ package com.example.flow_desk_backend.controller;
 
 import com.example.flow_desk_backend.util.EmailSender;
 import com.example.flow_desk_backend.util.RedisService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -45,7 +46,7 @@ public class AuthController {
     private final RedisService redisService;
 
     @PostMapping("/signup")
-    public ResponseEntity<SignupResponse> signUp(@RequestBody UserEntity user) {
+    public ResponseEntity<SignupResponse> signUp(@Valid @RequestBody UserEntity user) {
         CompanyEntity company = companyRepository.save(user.getCompany());
         CompanyEntity savedCompany = companyRepository.save(company);
 

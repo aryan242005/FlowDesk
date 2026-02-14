@@ -14,5 +14,4 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<UserEntity> findByEmployeeEmail(String email);
     List<UserEntity> findByCompany(CompanyEntity company);
     List<UserEntity> findByCompanyAndRoleIn(CompanyEntity company, List<Role> roles);
-    List<UserEntity> findByProjectId(Long projectId);
 }
