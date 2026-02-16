@@ -42,9 +42,7 @@ public class SecurityConfig {
             .requestMatchers("/manager/**").hasAnyRole("COMPANY_ADMIN", "MANAGER")
             .requestMatchers("/member/**").hasAnyRole("COMPANY_ADMIN", "MANAGER","DEVELOPER", "TESTER")
             .requestMatchers("/super-admin/**").hasAnyRole("SUPER_ADMIN")
-            .anyRequest().authenticated()
-        ).addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .anyRequest().authenticated());
 
         return http.build();
     }

@@ -34,7 +34,7 @@ public class LoginRateLimitingFilter extends OncePerRequestFilter {
                 if (!rateLimitService.isAllowed(key, 5, 60)) {
                     response.setStatus(429);
                     response.setContentType("application/json");
-                    response.getWriter().write("{\"error\": \"Too many login attempts.\"}");
+                    response.getWriter().write("{\"error\": \"Too many login login attempts.\"}");
                     return;
                 }
             }

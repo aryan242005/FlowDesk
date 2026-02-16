@@ -1,5 +1,6 @@
 package com.example.flow_desk_backend.controller;
 
+import com.example.flow_desk_backend.service.LoginAttemptService;
 import com.example.flow_desk_backend.util.EmailSender;
 import com.example.flow_desk_backend.util.RedisService;
 import jakarta.validation.Valid;
@@ -44,6 +45,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final EmailSender emailSender;
     private final RedisService redisService;
+    private final LoginAttemptService loginAttemptService;
 
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signUp(@Valid @RequestBody UserEntity user) {
@@ -70,23 +72,28 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest req) {
 
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.email(), req.password())
-        );
+        try{
+            Authentication auth = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(req.email(), req.password())
+            );
 
-        UserEntity user = ((CustomUserDetails) auth.getPrincipal()).getUser();
+            UserEntity user = ((CustomUserDetails) auth.getPrincipal()).getUser();
 
-        String token = jwtUtil.generateToken(user.getEmployeeEmail());
+            String token = jwtUtil.generateToken(user.getEmployeeEmail());
 
-        LoginResponse response = new LoginResponse(
-                user.getId(),
-                user.getEmployeeEmail(),
-                user.getRole().name(),
-                token,
-                "Login successful"
-        );
+            LoginResponse response = new LoginResponse(
+                    user.getId(),
+                    user.getEmployeeEmail(),
+                    user.getRole().name(),
+                    token,
+                    "Login successful"
+            );
 
-        return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response);
+        }catch(Exception e){
+            loginAttemptService.onFailure(req.email());
+            throw e;
+        }
     }
 
     @PostMapping("/customer-request")
