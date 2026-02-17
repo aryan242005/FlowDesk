@@ -1,10 +1,15 @@
 package com.example.flow_desk_backend.service;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import com.example.flow_desk_backend.entity.*;
 import com.example.flow_desk_backend.exception.*;
 import com.example.flow_desk_backend.repository.ProjectRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -55,8 +60,17 @@ public class TicketService {
         TicketEntity ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
         // Fetch loggedInUser
         UserEntity loggedInUser = validateAndGetCurrentUser(ticket.getProject(), "You cannot assign employee to tickets of another company's project", "Only project members can assign employee");
+
         // Find employee to whom ticket is to be assigned
         UserEntity employee = userRepository.findById(employeeId).orElseThrow(() -> new UserNotFoundException("Employee not found"));
+
+        // Check if user is from same company and project
+        if(!employee.getCompany().getCompanyId().equals(ticket.getCompany().getCompanyId())){
+            throw new AuthorizationException("Only employee from this company can be assigned");
+        }
+        if(!ticket.getProject().getProjectMembers().contains(employee)){
+            throw new AuthorizationException("Only employee from this project can be assigned");
+        }
 
         // Set employee to ticket
         ticket.setAssignedTo(employee);
@@ -90,12 +104,24 @@ public class TicketService {
     public TicketResponse updateTicketStatus(Long ticketId, TicketStatus status){
         TicketEntity ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new TicketNotFoundException("Ticket not found"));
 
+        // Check if correct status is being updated
+        if(!ticket.getStatus().canMoveTo(status)){
+            throw new InvalidStatusException("Invalid status");
+        }
+
+
+        // Check if employee is assigned
         if(ticket.getAssignedTo() == null){
             throw new EmployeeNotAssignedException("Employee must be assigned to update status");
         }
 
         // Fetch loggedInUser
         UserEntity loggedInUser = validateAndGetCurrentUser(ticket.getProject(),"You cannot update tickets of another company's project", "Only project members can update ticket");
+
+        // Check if manager or admin is closing the ticket
+        if(status == TicketStatus.CLOSED && !EnumSet.of(Role.MANAGER, Role.COMPANY_ADMIN).contains(loggedInUser.getRole())){
+            throw new AuthorizationException("Only manager or admin can close a ticket");
+        }
 
         // Check if only assignee is updating status or not
         if(!ticket.getAssignedTo().getId().equals(loggedInUser.getId())){
@@ -129,13 +155,17 @@ public class TicketService {
         );
     }
 
-    public List<TicketResponse> getAllProjectTickets(Long companyId, Long projectId) {
+    public Page<TicketResponse> getAllProjectTickets(Long companyId, Long projectId, int page, int size) {
         ProjectEntity project = projectRepository.findById(projectId).orElseThrow(() -> new ProjectNotFoundException("Project with id " + projectId + " not found"));
 
+        // Validate current user
         UserEntity loggedInUser = validateAndGetCurrentUser(project, "You cannot view tickets of another company's project", "Only project members can view tickets");
 
-        List<TicketEntity> tickets = ticketRepository.findByProject(project);
-        return tickets.stream().map(this::mapToDto).toList();
+        // Pagination
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        Page<TicketEntity> tickets = ticketRepository.findByProject(project, pageable);
+        return tickets.map(this::mapToDto);
     }
 
     // Utility Functions

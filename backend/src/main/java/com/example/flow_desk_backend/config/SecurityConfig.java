@@ -37,10 +37,10 @@ public class SecurityConfig {
         )
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/auth/**").permitAll()
-            .requestMatchers("/message/**").permitAll()
+            .requestMatchers("/message/**").hasAnyRole("COMPANY_ADMIN", "MANAGER", "DEVELOPER", "TESTER")
             .requestMatchers("/admin/**").hasRole("COMPANY_ADMIN")
             .requestMatchers("/manager/**").hasAnyRole("COMPANY_ADMIN", "MANAGER")
-            .requestMatchers("/member/**").hasAnyRole("COMPANY_ADMIN", "MANAGER","DEVELOPER", "TESTER")
+            .requestMatchers("/member/**").hasAnyRole("COMPANY_ADMIN", "MANAGER", "DEVELOPER", "TESTER")
             .requestMatchers("/super-admin/**").hasAnyRole("SUPER_ADMIN")
             .anyRequest().authenticated());
 

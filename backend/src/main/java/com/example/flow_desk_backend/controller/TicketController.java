@@ -3,8 +3,10 @@ package com.example.flow_desk_backend.controller;
 import java.util.List;
 
 import com.example.flow_desk_backend.dto.*;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.flow_desk_backend.entity.TicketEntity;
@@ -59,13 +61,23 @@ public class TicketController {
     }
 
     @GetMapping("member/all/{companyId}/{projectId}")
-    private ResponseEntity<ApiResponse<List<TicketResponse>>> getAllProjectTickets(@RequestParam Long companyId, @RequestParam Long projectId){
-        List<TicketResponse> tickets = ticketService.getAllProjectTickets(companyId, projectId);
-        ApiResponse<List<TicketResponse>> response = new ApiResponse<>(
-                true,
-                tickets.size() + " tickets found and fetched successfully",
-                tickets
+    private ResponseEntity<ApiResponse<PaginationResponse<List<TicketResponse>>>> getAllProjectTickets(@PathVariable Long companyId, @PathVariable Long projectId, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size){
+        Page<TicketResponse> pageResult = ticketService.getAllProjectTickets(companyId, projectId, page, size);
+
+        PaginationResponse<List<TicketResponse>> paginationResponse = new PaginationResponse<>(
+                pageResult.getNumber(),
+                pageResult.getSize(),
+                pageResult.getTotalElements(),
+                pageResult.getTotalPages(),
+                pageResult.getContent()
         );
+
+        ApiResponse<PaginationResponse<List<TicketResponse>>> response = new ApiResponse<>(
+                true,
+                "Tickets fetched successfully",
+                paginationResponse
+        );
+
         return ResponseEntity.status(HttpStatus.FOUND).body(response);
     }
 }
