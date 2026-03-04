@@ -9,7 +9,7 @@ import com.example.flow_desk_backend.entity.UserEntity;
 import com.example.flow_desk_backend.exception.AuthorizationException;
 import com.example.flow_desk_backend.exception.InvalidFileException;
 import com.example.flow_desk_backend.exception.TicketNotFoundException;
-import com.example.flow_desk_backend.repository.TicketMessageRepository;
+import com.example.flow_desk_backend.repository.TicketCommentRepository;
 import com.example.flow_desk_backend.repository.TicketRepository;
 import com.example.flow_desk_backend.security.CustomUserDetails;
 import jakarta.transaction.Transactional;
@@ -26,7 +26,7 @@ import java.util.List;
 public class TicketCommentService {
 
     private final TicketRepository ticketRepository;
-    private final TicketMessageRepository ticketMessageRepository;
+    private final TicketCommentRepository ticketMessageRepository;
     private final FileService fileService;
 
     @Transactional

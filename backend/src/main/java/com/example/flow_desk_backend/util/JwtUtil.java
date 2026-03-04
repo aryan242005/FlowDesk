@@ -5,6 +5,7 @@ import java.util.Date;
 
 import javax.crypto.SecretKey;
 
+import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -57,5 +58,16 @@ public class JwtUtil {
         return extractAllClaims(token)
                 .getExpiration()
                 .before(new Date());
+    }
+
+    public boolean validateToken(String token){
+        try{
+            Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build().parseSignedClaims(token);
+            return true;
+        }catch(JwtException | IllegalArgumentException e){
+            return false;
+        }
     }
 }

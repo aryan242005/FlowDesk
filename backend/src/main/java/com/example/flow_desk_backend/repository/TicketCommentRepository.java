@@ -1,13 +1,11 @@
 package com.example.flow_desk_backend.repository;
 
 import com.example.flow_desk_backend.entity.TicketCommentEntity;
-import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
-public interface TicketMessageRepository extends JpaRepository<TicketCommentEntity, Long> {
+public interface TicketCommentRepository extends JpaRepository<TicketCommentEntity, Long> {
     List<TicketCommentEntity> findByTicketTicketId(Long ticketId);
 
 //    @Query("""

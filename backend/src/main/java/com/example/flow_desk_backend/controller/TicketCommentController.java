@@ -1,14 +1,19 @@
 package com.example.flow_desk_backend.controller;
 
 import com.example.flow_desk_backend.dto.*;
+import com.example.flow_desk_backend.entity.TicketCommentEntity;
+import com.example.flow_desk_backend.repository.TicketCommentRepository;
 import com.example.flow_desk_backend.service.FileService;
 import com.example.flow_desk_backend.service.TicketCommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.net.MalformedURLException;
 import java.util.List;
@@ -16,10 +21,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/message")
 @RequiredArgsConstructor
-public class TicketMessageController {
+public class TicketCommentController {
 
     private final TicketCommentService ticketCommentService;
     private final FileService fileService;
+    private final TicketCommentRepository ticketCommentRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @PostMapping(value="/create", consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse<TicketMessageResponse>> addTicketMessage(AddTicketMessageRequest request){
@@ -52,5 +59,15 @@ public class TicketMessageController {
         );
 
         return ResponseEntity.status(HttpStatus.FOUND).body(response);
+    }
+
+    @PreAuthorize("hasAnyRole('MANAGER','DEVELOPER','TESTER','COMPANY_ADMIN','SUPER_ADMIN')")
+    @MessageMapping("/chat")
+    public void handleProjectChat(@Payload TicketCommentEntity chatComment){
+        ticketCommentRepository.save(chatComment);
+        messagingTemplate.convertAndSend(
+            "/topic/ticket" + chatComment.getTicket().getTicketId(),
+            chatComment
+        );
     }
 }
